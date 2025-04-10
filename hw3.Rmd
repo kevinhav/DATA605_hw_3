@@ -1,0 +1,284 @@
+---
+title: "DATA 605 HW 3"
+author: "Kevin Havis"
+date: "April 10, 2025"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Problem 1: Transportation Safety
+
+## Scenario
+You are a data analyst at a transportation safety organization. Your task is to analyze the relationship between the speed of cars and their stopping distance using the built-in R dataset `cars`. This analysis will help in understanding how speed affects the stopping distance, which is crucial for improving road safety regulations.
+
+## Tasks
+
+### Data Visualization
+```{r cars_visualization}
+# Create a scatter plot of stopping distance (dist) as a function of speed (speed)
+# Add a regression line to the plot
+```
+
+### Build a Linear Model
+```{r cars_linear_model}
+# Construct a simple linear regression model
+# Summarize the model
+```
+
+### Model Quality Evaluation
+```{r model_quality}
+# Calculate and interpret the R-squared value
+# Perform a residual analysis
+```
+
+### Residual Analysis
+```{r residual_analysis}
+# Plot residuals versus fitted values
+# Create Q-Q plot of residuals
+# Perform Shapiro-Wilk test
+# Plot histogram of residuals
+```
+
+### Conclusion
+*Write your conclusion here discussing model appropriateness, assumptions, and potential improvements.*
+
+# Problem 2: Health Policy Analysis
+
+## Scenario
+As a health policy analyst for an international organization, you are tasked with analyzing data from the World Health Organization (WHO) to inform global health policies. The dataset provided (who.csv) contains crucial health indicators for various countries from the year 2008.
+
+## Question 1: Initial Assessment of Healthcare Expenditures and Life Expectancy
+
+```{r who_data_import}
+# Import the WHO dataset
+```
+
+```{r q1_visualization}
+# Create a scatterplot of LifeExp vs. TotExp
+```
+
+```{r q1_linear_regression}
+# Run a simple linear regression model
+```
+
+*Interpret F-statistic, R-squared value, standard error, and p-values here.*
+
+*Discuss whether regression assumptions are met.*
+
+*Discuss implications for health policy.*
+
+## Question 2: Transforming Variables for a Better Fit
+
+```{r q2_transformation}
+# Transform variables: LifeExp^4.6 and TotExp^0.06
+```
+
+```{r q2_visualization}
+# Create a scatterplot with the transformed variables
+```
+
+```{r q2_linear_regression}
+# Run regression with transformed variables
+```
+
+*Compare models and discuss which provides better fit.*
+
+*Discuss impact of transformations on interpretation.*
+
+## Question 3: Forecasting Life Expectancy Based on Transformed Expenditures
+
+```{r q3_forecasting}
+# Forecast life expectancy for specified transformed values
+```
+
+*Discuss implications of these forecasts.*
+
+## Question 4: Interaction Effects in Multiple Regression
+
+```{r q4_multiple_regression}
+# Build multiple regression model with interaction
+```
+
+*Interpret F-statistic, R-squared value, standard error, and p-values.*
+
+*Evaluate the interaction term.*
+
+*Discuss policy recommendations.*
+
+## Question 5: Forecasting Life Expectancy with Interaction Terms
+
+```{r q5_forecasting}
+# Forecast life expectancy using the multiple regression model
+```
+
+*Discuss whether the forecast seems realistic and limitations of the model.*
+
+# Problem 3: Retail Company Analysis
+
+## Question 1: Inventory Cost
+
+### Scenario
+A retail company is planning its inventory strategy for the upcoming year. They expect to sell 110 units of a high-demand product. The storage cost is $3.75 per unit per year, and there is a fixed ordering cost of $8.25 per order.
+
+### Task
+```{r inventory_optimization}
+# Calculate optimal lot size and number of orders
+```
+
+## Question 2: Revenue Maximization
+
+### Scenario
+A company is running an online advertising campaign with revenue function:
+$$R(t) = 40t \cdot e^{-0.2t}$$
+
+### Task
+```{r revenue_maximization}
+# Find time at which revenue is maximized
+```
+
+## Question 3: Demand Area Under Curve
+
+### Scenario
+A company sells a product with demand function:
+$$P(q) = 30 - 2q$$
+
+### Task
+```{r demand_curve}
+# Calculate area under the demand curve
+```
+
+## Question 4: Profit Optimization
+
+### Scenario
+A beauty supply store sells flat irons with profit function:
+$$P(x) = -x^2 + 50x - 100$$
+
+### Task
+```{r profit_optimization}
+# Find value of x that maximizes profit
+```
+
+## Question 5: Spending Behavior
+
+### Scenario
+A market research firm is analyzing spending behavior with probability density function:
+$$f(x) = \frac{3}{x^4}, \text{ for } x \geq 1$$
+
+### Task
+```{r spending_behavior}
+# Determine if valid PDF and calculate probability
+```
+
+## Question 6: Market Share Estimation
+
+### Scenario
+An electronics company has market penetration rate:
+$$\frac{dS}{dt} = 0.4(1-S)$$
+
+### Task
+```{r market_share}
+# Integrate to find cumulative market share
+```
+
+# Problem 4: Business Optimization
+
+## Scenario
+As a data scientist at a consultancy firm, you are tasked with optimizing various business functions using Taylor Series expansions.
+
+## Question 1: Revenue and Cost
+
+### Scenario
+A company's revenue is approximated by $R(x) = x^2e^{-0.1x}$ and cost by $C(x) = \sqrt{x^3 + 1}$.
+
+### Task
+```{r revenue_cost_taylor}
+# Approximate Revenue Function using Taylor Series
+# Approximate Cost Function using Taylor Series
+# Compare optimization results
+```
+
+## Question 2: Financial Modeling
+
+### Scenario
+A financial analyst is modeling risk as $R(x) = \sqrt{x}$.
+
+### Task
+```{r financial_modeling}
+# Derive Taylor Series expansion
+# Compare approximated risk with actual function
+```
+
+## Question 3: Inventory Management
+
+### Scenario
+In a manufacturing process, demand decreases as price increases: $D(p) = 1000e^{-0.01p}$, with cost $C(p) = p^{-1}$.
+
+### Task
+```{r inventory_management}
+# Expand cost function using Taylor Series
+# Approximate profit function
+# Suggest pricing strategy
+```
+
+## Question 4: Economic Forecasting
+
+### Scenario
+Economic growth is modeled by $G(x) = \ln(1+x)$.
+
+### Task
+```{r economic_forecasting}
+# Derive Maclaurin Series expansion
+# Approximate growth for small investments
+# Recommend investment level
+```
+
+# Problem 5: Profit, Cost, & Pricing
+
+## Question 1: Profit Maximization
+
+### Scenario
+A company produces two products with profit function:
+$$P(x,y) = 3x^2 + 4xy - 2y^2 - 6x + 5$$
+
+### Task
+```{r profit_maxima}
+# Find local maxima, minima, and saddle points
+```
+
+## Question 2: Pricing Strategy
+
+### Scenario
+A supermarket sells two competing brands with demand functions:
+$$D_X(p_X, p_Y) = 15 - 2p_X + p_Y$$
+$$D_Y(p_X, p_Y) = 10 + p_X - 2p_Y$$
+
+### Task
+```{r pricing_strategy}
+# Find revenue function
+# Determine optimal prices
+```
+
+## Question 3: Cost Minimization
+
+### Scenario
+A manufacturing company operates two plants with total cost:
+$$C(x,y) = 2x^2 + 2xy + y^2 - 8x - 10y + 25$$
+
+### Task
+```{r cost_minimization}
+# Determine optimal production at each plant
+```
+
+## Question 4: Marketing Mix
+
+### Scenario
+A company's marketing effectiveness is modeled by:
+$$E(x,y) = 500 \ln(x+1) + 800 \ln(y+1) - 10x^2 - 20y^2$$
+
+### Task
+```{r marketing_mix}
+# Find optimal spending levels
+# Identify saddle points
+```
