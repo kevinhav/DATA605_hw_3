@@ -8,6 +8,11 @@ date: "April 10, 2025"
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+```{r}
+library(ggplot2)
+```
+
+
 # Problem 1: Transportation Safety
 
 ## Scenario
@@ -17,28 +22,48 @@ You are a data analyst at a transportation safety organization. Your task is to 
 
 ### Data Visualization
 ```{r cars_visualization}
+
+data(cars)
+
 # Create a scatter plot of stopping distance (dist) as a function of speed (speed)
-# Add a regression line to the plot
+
+plot <- cars |> 
+  ggplot(aes(dist, speed)) +
+  geom_point() +
+  geom_smooth(method = 'lm', se = FALSE) + # Add a regression line to the plot
+  ggtitle("Stopping Distance vs Speed")
+print(plot)
+
 ```
 
 ### Build a Linear Model
 ```{r cars_linear_model}
 # Construct a simple linear regression model
+model <- lm(dist ~ speed, data=cars)
+
 # Summarize the model
+summary(model)
 ```
 
 ### Model Quality Evaluation
 ```{r model_quality}
 # Calculate and interpret the R-squared value
+summary(model)$r.squared
 # Perform a residual analysis
+plot(density(resid(model)))
+
 ```
 
 ### Residual Analysis
 ```{r residual_analysis}
 # Plot residuals versus fitted values
+plot(model, 1)
 # Create Q-Q plot of residuals
+plot(model, 2)
 # Perform Shapiro-Wilk test
+
 # Plot histogram of residuals
+plot(hist(resid(model)))
 ```
 
 ### Conclusion
