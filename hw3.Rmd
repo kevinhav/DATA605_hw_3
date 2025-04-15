@@ -97,7 +97,7 @@ who <- who |>
 # Create a scatterplot of LifeExp vs. TotExp
 
 plot <- who |> 
-  ggplot(aes(LifeExp, TotExp)) +
+  ggplot(aes(TotExp, LifeExp)) +
   geom_point()
 
 print(plot)
@@ -106,39 +106,68 @@ print(plot)
 
 ```{r q1_linear_regression}
 # Run a simple linear regression model
+who_model <- lm(LifeExp ~ TotExp, data=who)
+summary(who_model)
 ```
 
 *Interpret F-statistic, R-squared value, standard error, and p-values here.*
 
+- F-statistic: The F-statistic measure the ratio of variance, which we expect to close to 1 if there is no relationship. Since we see a high F-statistic, and its corresponding p-value is very low, we can say that there is some relationship between `LifeExp` and `TotExp`
+- $R^2$: The $R^2$ is positive and around 25%, which indicates that the linear model is showing some correlation, but it does not well explain the data. This intuitively makes sense given the scatterplot we observed before.
+- p-value: We do see a statistical significance to the correlation between the two variables; even though the model explains a small amount of the variance, it likely a real relationship.
+
 *Discuss whether regression assumptions are met.*
 
+The data clearly that the relationship is not linear in the data's current state. We also are unlikely to see homoscedasticity (normally distributed residuals) were we to plot them given the shape of the data.
+
 *Discuss implications for health policy.*
+
+We can confirm that there is a positive relationship between increasing life expectancy and increased expenditures, however our model is not robust enough to accurately estimate expenditure costs. We will need to improve the model with some data preprocesing.
 
 ## Question 2: Transforming Variables for a Better Fit
 
 ```{r q2_transformation}
 # Transform variables: LifeExp^4.6 and TotExp^0.06
+who_2 <- who |> 
+  mutate(TotExp = TotExp^0.06) |> 
+  mutate(LifeExp = LifeExp^4.6)
 ```
 
 ```{r q2_visualization}
 # Create a scatterplot with the transformed variables
+ggplot(who_2, aes(TotExp, LifeExp)) +
+  geom_point()
 ```
 
 ```{r q2_linear_regression}
 # Run regression with transformed variables
+who_model_2 <- lm(LifeExp ~ TotExp, data=who_2)
+summary(who_model_2)
 ```
 
 *Compare models and discuss which provides better fit.*
 
+We can see that after our transformations, our linear model is a far better fit for the data. For one metric, our $R^2$ value has increased from 25% to 73%!
+
 *Discuss impact of transformations on interpretation.*
+
+By transforming our data, we've been able to keep our simple linear regression model, as well as drastically improve its performance. For such a simple transformation, this is well worth it, although we should remember to invert the operation when communicating our prediction targets.
 
 ## Question 3: Forecasting Life Expectancy Based on Transformed Expenditures
 
 ```{r q3_forecasting}
 # Forecast life expectancy for specified transformed values
+
+X_test <- tibble(TotExp = c(1.5, 2.5))
+y_test <- predict(who_model_2, X_test)
+y_test <- y_test ^ (1/4.6)
+print(y_test)
+
 ```
 
 *Discuss implications of these forecasts.*
+
+With this improvement to our model, we are now in a much better position to inform the WHO predicted life expectancy at different budgets. It seems additional funding has the most impact after the age of 50, up to a plateau of 80.
 
 ## Question 4: Interaction Effects in Multiple Regression
 
