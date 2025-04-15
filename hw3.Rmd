@@ -10,6 +10,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{r}
 library(ggplot2)
+library(tidyverse)
 ```
 
 
@@ -28,7 +29,7 @@ data(cars)
 # Create a scatter plot of stopping distance (dist) as a function of speed (speed)
 
 plot <- cars |> 
-  ggplot(aes(dist, speed)) +
+  ggplot(aes(speed, dist)) +
   geom_point() +
   geom_smooth(method = 'lm', se = FALSE) + # Add a regression line to the plot
   ggtitle("Stopping Distance vs Speed")
@@ -69,6 +70,12 @@ plot(hist(resid(model)))
 ### Conclusion
 *Write your conclusion here discussing model appropriateness, assumptions, and potential improvements.*
 
+Our model shows about 65% of the variance in stopping distance is explained by increases in speed, which is a very good indicator of a postiive linear relationship.
+
+Additionally, when reviewing our residuals (both in the QQ plot and histogram), we can see that they are well distributed about zero. This is also a good indicator of a high performing linear model; we expect this type of random variance to have a mean of zero.
+
+Regarding improvements, there are a few outliers near zero I can see that may be skewing the regression. To improve generalized performance, it may be worth removing those and running the model again.
+
 # Problem 2: Health Policy Analysis
 
 ## Scenario
@@ -78,10 +85,23 @@ As a health policy analyst for an international organization, you are tasked wit
 
 ```{r who_data_import}
 # Import the WHO dataset
+who <- read_csv("who.csv")
+
+# Remove empty column
+who <- who |> 
+  select(!c("...10", "LifeExp...12")) |> 
+  rename(LifeExp = LifeExp...2)
 ```
 
 ```{r q1_visualization}
 # Create a scatterplot of LifeExp vs. TotExp
+
+plot <- who |> 
+  ggplot(aes(LifeExp, TotExp)) +
+  geom_point()
+
+print(plot)
+
 ```
 
 ```{r q1_linear_regression}
