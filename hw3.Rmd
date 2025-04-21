@@ -11,6 +11,8 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r}
 library(ggplot2)
 library(tidyverse)
+library(glue)
+library(pracma)
 ```
 
 
@@ -81,7 +83,7 @@ Regarding improvements, there are a few outliers near zero I can see that may be
 ## Scenario
 As a health policy analyst for an international organization, you are tasked with analyzing data from the World Health Organization (WHO) to inform global health policies. The dataset provided (who.csv) contains crucial health indicators for various countries from the year 2008.
 
-## Question 1: Initial Assessment of Healthcare Expenditures and Life Expectancy
+## Question 1: Health Policy Analyst
 
 ```{r who_data_import}
 # Import the WHO dataset
@@ -173,21 +175,39 @@ With this improvement to our model, we are now in a much better position to info
 
 ```{r q4_multiple_regression}
 # Build multiple regression model with interaction
+who_model_3 <- lm(LifeExp ~ PropMD + TotExp + (PropMD*TotExp), who_2)
+summary(who_model_3)
 ```
 
 *Interpret F-statistic, R-squared value, standard error, and p-values.*
 
+These additional features slightly improve our $R^2$ metric by approximately 2%
+
 *Evaluate the interaction term.*
 
+The interaction term describes explained variance in the presence of both `PropMD` and `TotExp`, *without regard for the variance they explain individually*. In some cases, the sum of two features is greater than the whole; this is what the interaction effect describes.
+
+In this case, we see no statistical significance in the interaction effect between the proportion of medical doctors and total healthcare expenses, so we should not include this in our model.
+
 *Discuss policy recommendations.*
+
+By itself, however, `PropMD` does have a positive relationship with `LifeExp` and has improved our $R^2$, so we should keep it in the model. 
+
+Regarding policy, we can advise the WHO that more doctors can have a positive effect on average life expectancy.
 
 ## Question 5: Forecasting Life Expectancy with Interaction Terms
 
 ```{r q5_forecasting}
 # Forecast life expectancy using the multiple regression model
+X_test <- tibble(TotExp = c(14), PropMD = c(0.03)) # Not transformed
+y_test <- predict(who_model_3, X_test)
+y_test <- y_test ^ (1/4.6)
+print(y_test)
 ```
 
 *Discuss whether the forecast seems realistic and limitations of the model.*
+
+Since `TotEXP = 14` is a parameter far beyond our data (and likely an unrealistic expenditure amount to begin with), we must interpret the results with caution. Extrapolated inputs, that is data that is orders of magnitude beyond our training set, is unlikely to be accurately predicted by a simple linear model.
 
 # Problem 3: Retail Company Analysis
 
@@ -196,20 +216,124 @@ With this improvement to our model, we are now in a much better position to info
 ### Scenario
 A retail company is planning its inventory strategy for the upcoming year. They expect to sell 110 units of a high-demand product. The storage cost is $3.75 per unit per year, and there is a fixed ordering cost of $8.25 per order.
 
+$$
+C(Q) = \frac{D}{Q} \times S + \frac{Q}{2} \times H
+$$
+
 ### Task
+
+```{r}
+# Symbolic approach
+
+# Must initialize values for R to work with them symolically
+# Values don't matter
+d <- 110
+s <- 8.25
+h <- 3.75
+
+fq <- expression((d / q) * s + (q / 2) * h)
+fq_deriv <- D(fq, "q")
+print(fq_deriv)
+
+```
+
+$$
+f(x)` =\frac{1}{2} * 3.75 - \frac{100}{q^2} * 8.25 = 1.875 - \frac{875}{q^2}
+$$
+$$
+1.875 - \frac{875}{q^2} = 0 \rightarrow \sqrt{q^2} = \sqrt{\frac{875}{1.875}} \rightarrow q = 21.6
+$$
+
 ```{r inventory_optimization}
 # Calculate optimal lot size and number of orders
+
+# Our cost function
+inventory_cost <- function(d=110, s=8.25, h=3.75, q) {
+  y <- (d / q) * s + (q / 2) * h
+return(y)
+}
+
+# Set up a number of potential orders
+q_vec <- seq(0,100, by=1)
+
+# Set up mock data
+inventory_data <- tibble(
+  x = q_vec,
+  y = inventory_cost(q=q_vec)
+)
+
+# Get minimum value
+ideal_order <- inventory_data |> 
+  slice_min(y, n=1) |> 
+  pull(x)
+
+# Plot to help visualize the function
+ggplot(inventory_data, aes(x=x, y=y)) +
+  geom_histogram(stat='identity') +
+  geom_hline(yintercept = min(inventory_data$y), color='red') +
+  geom_vline(xintercept = (ideal_order), color='red') +
+  annotate("text", x=ideal_order + 10, y = 200, label=glue("Ideal Order: {ideal_order}"))
+
+print(ideal_order)
+
 ```
 
 ## Question 2: Revenue Maximization
 
 ### Scenario
 A company is running an online advertising campaign with revenue function:
-$$R(t) = 40t \cdot e^{-0.2t}$$
+$$R(t) = -3150t^{-4} - 220t + 6530$$
 
 ### Task
+
+```{r}
+# Symbolic
+# Must initialize values for R to work with them symbolically
+# Values don't matter
+t <- 1
+
+fr <- expression(-3150*(t^-4) - 220*t + 6530)
+fr_deriv <- D(fr, "t")
+print(fr_deriv)
+
+
+```
+$$
+R'(t) = 3150 * (t^{-(5)} * 4) - 220
+$$
+$$
+0 = 3150 * 4t^{-(5)} - 220 \rightarrow t = 2.47
+$$
+
+
 ```{r revenue_maximization}
 # Find time at which revenue is maximized
+
+advert_revenue <- function(t)  {
+  y <- -3150*(t^-4) - 220*t + 6530
+return(y)
+}
+
+t_vec <- seq(0, 50, by=1)
+
+# Set up mock data
+revenue_data <- tibble(
+  x = t_vec,
+  y = advert_revenue(t=t_vec)
+)
+
+# Get minimum value
+ideal_campaign_length <- revenue_data |> 
+  slice_max(y, n=1) |> 
+  pull(x)
+
+# Plot to help visualize the function
+ggplot(revenue_data, aes(x=x, y=y)) +
+  geom_histogram(stat='identity') +
+  geom_hline(yintercept = max(revenue_data$y), color='red') +
+  geom_vline(xintercept = (ideal_campaign_length), color='red') +
+  annotate("text", x=15, y = 5000, label=glue("Ideal Duration: {ideal_campaign_length}"))
+
 ```
 
 ## Question 3: Demand Area Under Curve
@@ -219,8 +343,38 @@ A company sells a product with demand function:
 $$P(q) = 30 - 2q$$
 
 ### Task
+
+TODO need to take the integral
+
+$\int^5_2(30-2q)dx$
+
 ```{r demand_curve}
 # Calculate area under the demand curve
+
+x1 <- 2
+x2 <- 5
+
+demand_func <- function(x) {
+  
+  y<- 2*x - 9.3
+  return(y)
+}
+
+px1 <- demand_func(x1)
+px2 <- demand_func(x2)
+
+revenue_data <- tibble(
+  x = c(x1, x2),
+  y = c(px1, px2)
+)
+
+print(revenue_data)
+
+ggplot(revenue_data, aes(x=x, y=y)) +
+  geom_line()
+
+integrate(demand_func, lower=-6, upper = 6)
+
 ```
 
 ## Question 4: Profit Optimization
@@ -232,7 +386,18 @@ $$P(x) = -x^2 + 50x - 100$$
 ### Task
 ```{r profit_optimization}
 # Find value of x that maximizes profit
+
+x <- 1
+
+px <- expression(-x^2 + 50*x -100)
+px_deriv <- D(px, "x")
+print(px_deriv)
+
 ```
+
+$$
+50 - 2x = 0 \rightarrow x = 25
+$$
 
 ## Question 5: Spending Behavior
 
@@ -243,6 +408,9 @@ $$f(x) = \frac{3}{x^4}, \text{ for } x \geq 1$$
 ### Task
 ```{r spending_behavior}
 # Determine if valid PDF and calculate probability
+
+# Check if integral = 1
+
 ```
 
 ## Question 6: Market Share Estimation
