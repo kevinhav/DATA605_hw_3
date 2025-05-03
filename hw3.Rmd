@@ -13,6 +13,7 @@ library(ggplot2)
 library(tidyverse)
 library(glue)
 library(pracma)
+library(plotly)
 ```
 
 
@@ -23,9 +24,12 @@ You are a data analyst at a transportation safety organization. Your task is to 
 
 ## Tasks
 
+We can load the built-in `cars` data and plot it using `ggplot`, drawing a regression line through the data points.
+
 ### Data Visualization
 ```{r cars_visualization}
 
+# Load the data
 data(cars)
 
 # Create a scatter plot of stopping distance (dist) as a function of speed (speed)
@@ -40,6 +44,9 @@ print(plot)
 ```
 
 ### Build a Linear Model
+
+Now that we know our data is roughly linear, we can create a regression model to predict `dist` given `speed`.
+
 ```{r cars_linear_model}
 # Construct a simple linear regression model
 model <- lm(dist ~ speed, data=cars)
@@ -57,6 +64,8 @@ plot(density(resid(model)))
 
 ```
 
+Good news! Our $R^2$ is 65.1%, which means our model has identified a strong correlation between `speed` and `dist`. Our residuals are normally distributed, meaning our simple model accounts for much of the variability between points.
+
 ### Residual Analysis
 ```{r residual_analysis}
 # Plot residuals versus fitted values
@@ -68,6 +77,7 @@ plot(model, 2)
 # Plot histogram of residuals
 plot(hist(resid(model)))
 ```
+These plots give us additional views of the residuals, which is important when analyzing linear models.
 
 ### Conclusion
 *Write your conclusion here discussing model appropriateness, assumptions, and potential improvements.*
@@ -106,6 +116,8 @@ print(plot)
 
 ```
 
+Visualizing our data, we can see that is is not linearly distributed. This will be important to consider in a bit.
+
 ```{r q1_linear_regression}
 # Run a simple linear regression model
 who_model <- lm(LifeExp ~ TotExp, data=who)
@@ -127,6 +139,8 @@ The data clearly that the relationship is not linear in the data's current state
 We can confirm that there is a positive relationship between increasing life expectancy and increased expenditures, however our model is not robust enough to accurately estimate expenditure costs. We will need to improve the model with some data preprocesing.
 
 ## Question 2: Transforming Variables for a Better Fit
+
+A simple exponential transformation should drastically improve our model.
 
 ```{r q2_transformation}
 # Transform variables: LifeExp^4.6 and TotExp^0.06
@@ -222,27 +236,21 @@ $$
 
 ### Task
 
-```{r}
-# Symbolic approach
+Setting the derivative of this function equal to zero will tell us the "equilibrium" state of the lot size. Then we can divide the annual demand by the lot size to determine how many orders we should place throughout the year.
 
-# Must initialize values for R to work with them symolically
-# Values don't matter
-d <- 110
-s <- 8.25
-h <- 3.75
-
-fq <- expression((d / q) * s + (q / 2) * h)
-fq_deriv <- D(fq, "q")
-print(fq_deriv)
-
-```
+First, the derivative of $C(Q)$;
 
 $$
-f(x)` =\frac{1}{2} * 3.75 - \frac{100}{q^2} * 8.25 = 1.875 - \frac{875}{q^2}
+C'(q) =\frac{1}{2} * 3.75 - \frac{110}{q^2} * 8.25 = 1.875 - \frac{907.5}{q^2}
 $$
+Now. setting the derivative equal to zero to get $q$, our ideal lot size / order quantity;
+
 $$
-1.875 - \frac{875}{q^2} = 0 \rightarrow \sqrt{q^2} = \sqrt{\frac{875}{1.875}} \rightarrow q = 21.6
+1.875 - \frac{875}{q^2} = 0 \rightarrow \sqrt{q^2} = \sqrt{\frac{907.5}{1.875}} \rightarrow q = 22
 $$
+Then our number of orders per year is simply the annual demand divided by lot size; $110/22 = 5$.
+
+I've also solved this programmatically and graphically below.
 
 ```{r inventory_optimization}
 # Calculate optimal lot size and number of orders
@@ -285,6 +293,8 @@ A company is running an online advertising campaign with revenue function:
 $$R(t) = -3150t^{-4} - 220t + 6530$$
 
 ### Task
+
+Similarly to the last question, we can solve this by evaluating where the derivative equal to zero.
 
 ```{r}
 # Symbolic
@@ -332,6 +342,7 @@ ggplot(revenue_data, aes(x=x, y=y)) +
   geom_histogram(stat='identity') +
   geom_hline(yintercept = max(revenue_data$y), color='red') +
   geom_vline(xintercept = (ideal_campaign_length), color='red') +
+  labs(title = "Effectiveness of Advertising Campaign") +
   annotate("text", x=15, y = 5000, label=glue("Ideal Duration: {ideal_campaign_length}"))
 
 ```
@@ -340,11 +351,10 @@ ggplot(revenue_data, aes(x=x, y=y)) +
 
 ### Scenario
 A company sells a product with demand function:
-$$P(q) = 30 - 2q$$
+$$P(q) = 2x - 9.3$$
 
 ### Task
 
-TODO need to take the integral
 
 $\int^5_2(30-2q)dx$
 
@@ -381,7 +391,7 @@ integrate(demand_func, lower=-6, upper = 6)
 
 ### Scenario
 A beauty supply store sells flat irons with profit function:
-$$P(x) = -x^2 + 50x - 100$$
+$$\Pi(x) = x\ln(9x) - \frac{x^6}{6}$$
 
 ### Task
 ```{r profit_optimization}
@@ -389,7 +399,7 @@ $$P(x) = -x^2 + 50x - 100$$
 
 x <- 1
 
-px <- expression(-x^2 + 50*x -100)
+px <- expression(x*log(9 * x) - ((x^6) / 6) )
 px_deriv <- D(px, "x")
 print(px_deriv)
 
@@ -403,7 +413,7 @@ $$
 
 ### Scenario
 A market research firm is analyzing spending behavior with probability density function:
-$$f(x) = \frac{3}{x^4}, \text{ for } x \geq 1$$
+$$f(x) = \frac{1}{6x}$$
 
 ### Task
 ```{r spending_behavior}
@@ -411,17 +421,31 @@ $$f(x) = \frac{3}{x^4}, \text{ for } x \geq 1$$
 
 # Check if integral = 1
 
+fx <- function (x) {
+  
+  1 / (1 * x)
+}
+
+integrate(fx, 1, exp(6))
+
 ```
 
 ## Question 6: Market Share Estimation
 
 ### Scenario
 An electronics company has market penetration rate:
-$$\frac{dS}{dt} = 0.4(1-S)$$
+$$\frac{dN}{dt} = \frac{500}{t^4+10}$$
 
 ### Task
 ```{r market_share}
 # Integrate to find cumulative market share
+dN <- function (t) {
+  500 / (t^4 + 10)
+}
+
+# Limit between 0, 1 to account for constant of integration
+integrate(dN, 0, 1)
+
 ```
 
 # Problem 4: Business Optimization
@@ -429,40 +453,198 @@ $$\frac{dS}{dt} = 0.4(1-S)$$
 ## Scenario
 As a data scientist at a consultancy firm, you are tasked with optimizing various business functions using Taylor Series expansions.
 
+```{r}
+# Claude generated function to plot Taylor series approximations
+# using pracma taylor() and polyval()
+
+plot_with_taylor <- function(functions, labels = NULL, x_range = c(-2, 2), 
+                             center = 0, degree = 3, 
+                             colors = c("red", "blue", "green"),
+                             xlab = "x", ylab = "y", main = "Functions with Taylor Series Approximations") {
+  
+  # Create x values for plotting
+  x <- seq(x_range[1], x_range[2], length.out = 100)
+  
+  # Create a data frame for ggplot
+  plot_data <- data.frame(x = numeric(0), 
+                         y = numeric(0), 
+                         type = character(0),
+                         function_name = character(0))
+  
+  # Track y values for dynamic scaling
+  all_y_values <- c()
+  
+  for (i in 1:length(functions)) {
+    f <- functions[[i]]
+    function_name <- labels[i]
+    
+    # Get y values for original function with error handling
+    y <- sapply(x, function(x_val) {
+      tryCatch(f(x_val), error = function(e) NA, warning = function(w) NA)
+    })
+    
+    # Track y values for scaling
+    all_y_values <- c(all_y_values, y)
+    
+    # Add original function to plot data
+    function_data <- data.frame(
+      x = x,
+      y = y,
+      type = "Original",
+      function_name = function_name
+    )
+    plot_data <- rbind(plot_data, function_data)
+    
+    # Add Taylor approximation with error handling
+    tryCatch({
+      taylor_coef <- taylor(f, center, degree)
+      
+      # Calculate Taylor approximation for each x
+      y_taylor <- sapply(x, function(x_val) {
+        tryCatch(
+          polyval(taylor_coef, x_val - center),
+          error = function(e) NA,
+          warning = function(w) NA
+        )
+      })
+      
+      # Track y values for scaling
+      all_y_values <- c(all_y_values, y_taylor)
+      
+      # Add Taylor approximation to plot data
+      taylor_data <- data.frame(
+        x = x,
+        y = y_taylor,
+        type = paste("Taylor degree", degree),
+        function_name = function_name
+      )
+      plot_data <- rbind(plot_data, taylor_data)
+    }, error = function(e) {
+      warning(paste("Could not compute Taylor series for function", i, 
+                   "- Error:", e$message))
+    }, warning = function(w) {
+      # Suppress warnings
+    })
+  }
+  
+  
+  # Create the named vectors for scale functions properly
+  linetype_values <- c("solid", "dashed")
+  names(linetype_values) <- c("Original", paste("Taylor degree", degree))
+
+  
+  # Create ggplot with combined legend for line type and width
+  p <- ggplot(plot_data, aes(x = x, y = y, color = function_name)) +
+    geom_line(aes(linetype = type)) +
+    scale_linetype_manual(values = linetype_values) +
+    scale_color_manual(values = colors[1:length(functions)]) +
+    labs(
+      title = main,
+      x = xlab,
+      y = ylab,
+      color = "Function",
+      linetype = "Type"
+    ) +
+    # Combine the legends for linetype and linewidth
+    guides(
+      linewidth = "none",  # Hide the linewidth legend
+      linetype = guide_legend(title = "Type")  # Keep only linetype legend with title "Type"
+    ) +
+    theme_minimal() +
+    geom_vline(xintercept = 0, linetype = "dotted", color = "gray50") +
+    geom_hline(yintercept = 0, linetype = "dotted", color = "gray50")
+  
+  return(p)
+}
+```
+
 ## Question 1: Revenue and Cost
 
 ### Scenario
-A company's revenue is approximated by $R(x) = x^2e^{-0.1x}$ and cost by $C(x) = \sqrt{x^3 + 1}$.
+A company's revenue is approximated by $R(x) = e^x$ and cost by $C(x) = \ln(1+x)$. Profit is defined as $\Pi(x) = R(x) - C(x)$
 
 ### Task
 ```{r revenue_cost_taylor}
-# Approximate Revenue Function using Taylor Series
+Rx <- function (x) {
+  x^2 * exp(1)^(-0.1 * x)
+}
+
+Cx <- function (x) {
+  sqrt((x^3) + 1)
+}
+
+Px <- function (x) {
+  Rx(x) - Cx(x)
+}
+
+# Approximate Revenue Function using Taylor Series to second degree
 # Approximate Cost Function using Taylor Series
-# Compare optimization results
+# Approximate Profit function using Taylor Series
+
+plot_with_taylor(functions = list(Rx, Cx, Px), labels = c("Rx", "Cx", "Px"), center = 0.1, degree = 2, main = "Cost, Profit, and Revenue Functions")
+
+# Compare optimization results linear vs original
 ```
+
+Taylor Series expansions are useful to approximate functions by leveraging the nature of derivatives of exponential functions. 
+
+Taylor series allow us to get simpler approximations around a point of a function. Real world functions may be polynomials of very high degrees, which can be difficult to compute. Using Taylor series, we can take a simpler linear or quadratic (1st and 2nd degree polynomials) approximation of the original function.
+
+From our plot of $P(x)$, our approximation would suggest producing at least 1.5x units, and the actual function suggests greater than 1.75x units in order to recognized a profit.
+
 
 ## Question 2: Financial Modeling
 
 ### Scenario
-A financial analyst is modeling risk as $R(x) = \sqrt{x}$.
+A financial analyst is modeling risk as $f(x) = \sqrt{x}$.
 
 ### Task
 ```{r financial_modeling}
-# Derive Taylor Series expansion
+# Derive Taylor Series expansion around 0 to 2nd degree
+
+fx <- function(x){
+  x^(1/2)
+}
+
+
 # Compare approximated risk with actual function
+plot_with_taylor(functions = list(fx), labels = c("fx"), center = 0.1, degree = 2, main = "Taylor Series Approximation")
+
+# Find optimal investment amount that balances risk and return
 ```
+
+In this scenario, our approximation is still useful for small investments ($0<x<0.5$). Outside of this range, the Taylor series does not converge well enough for us to reliable predict the risk of the investment.
+
+An optimally balanced portfolio would depend on the risk preference of the investor, as $f(x)$ will continue to increase in risk as $x$ increases. The derivative function should then be set to equal the alpha rate, which would provide a value of $x$ that matches the investors risk appetite.
 
 ## Question 3: Inventory Management
 
 ### Scenario
-In a manufacturing process, demand decreases as price increases: $D(p) = 1000e^{-0.01p}$, with cost $C(p) = p^{-1}$.
+In a manufacturing process, demand decreases as price increases: $D(p) = 1 - p$, with cost $C(p) = e^p$.
 
 ### Task
 ```{r inventory_management}
-# Expand cost function using Taylor Series
+# Expand cost function using Taylor Series around 0 to 2nd degree
+
+Cp <- function (p) {
+  exp(p)
+}
+
+Dp <- function(p) {
+  1 - p
+}
+
 # Approximate profit function
-# Suggest pricing strategy
+Pp <- function(p) {
+  p * Dp(p) - Cp(p)
+}
+
+plot_with_taylor(functions = list(Cp, Dp, Pp), labels = c("C(p)", "D(p)", "P(p)"), center = 0.1, degree = 2, main = "Taylor Series Approximation")
 ```
+
+With the simpler functions of $C(p)$, $D(p)$, $P(p)$, we can see that a 2 degree Taylor series expansion approximates the original functions quite well.
+
+However, we must highlight that given these cost, demand, and profit functions, there is no price $p$ that could be set to achieve a profit. There is simply not enough demand in this market to justify the cost of production.
 
 ## Question 4: Economic Forecasting
 
@@ -472,9 +654,19 @@ Economic growth is modeled by $G(x) = \ln(1+x)$.
 ### Task
 ```{r economic_forecasting}
 # Derive Maclaurin Series expansion
+
+Gx <- function (x) {
+  log(1+x)
+}
 # Approximate growth for small investments
+
+plot_with_taylor(c(Gx), labels=c("G(x)"), center = 0) # 0 for Maclaurin
 # Recommend investment level
 ```
+
+In economic forecasting, we are frequently updating our forecast models with the last current events and information based on today's information at $t=0$, which we could also describe as a steady state or $x=0$. These models can become extremely complex, so being able to update our Taylor Series approximations, around the steady state $x=0$, gives us a much better way of reducing the complexity of the forecasting model.
+
+From the plot, we can see that this particular function is very well approximated between $x=[-0.5, 0.75]$. Within this range, we could advise policy the expected growth rate expected by our approximation with confidence. However, it would be important to update our data regularly; as we observed, the approximation will fall off as the steady state changes.
 
 # Problem 5: Profit, Cost, & Pricing
 
@@ -482,42 +674,106 @@ Economic growth is modeled by $G(x) = \ln(1+x)$.
 
 ### Scenario
 A company produces two products with profit function:
-$$P(x,y) = 3x^2 + 4xy - 2y^2 - 6x + 5$$
+$$\Pi(x,y) = 30x - 2x^2 - 3xy + 24y - 4y^2$$
 
 ### Task
 ```{r profit_maxima}
 # Find local maxima, minima, and saddle points
+
+Px <- function(x, y) {
+  30*x - 2*(x^2) - 3*x*y + 24*y - 4*(y^2)
+}
+
+# Partial derivatives
+partial_Px <- function(vars) {
+  x <- vars[1]
+  y <- vars[2]
+  
+  # Partial derivatives
+  dfdx <- 30 - 4*x - 3*y
+  dfdy <- -3*x + 24 - 8*y
+  
+  return(c(dfdx, dfdy))
+}
+
+# Find critical point by setting to zero
+cp <- fsolve(partial_Px, c(0,0))
+
+# Second partial derivative
+fxx <- -4
+fyy <- -8
+fxy <- -3
+
+# Find Discriminant
+
+D <- fxx * fyy - (fxy^2)
+
+# Classify the critical point
+if (D > 0 && fxx < 0) {
+  cat("Critical point is a local maximum \n")
+} else if (D > 0 && fxx > 0) {
+  cat("Critical point is a local minimum\n")
+} else if (D < 0) {
+  cat("Critical point is a saddle point\n")
+} else {
+  cat("Further analysis required\n")
+}
+
+print(cp[[1]][1])
+print(cp[[1]][2])
+Px(cp[[1]][1], cp[[1]][2])
+
 ```
 
 ## Question 2: Pricing Strategy
 
 ### Scenario
 A supermarket sells two competing brands with demand functions:
-$$D_X(p_X, p_Y) = 15 - 2p_X + p_Y$$
-$$D_Y(p_X, p_Y) = 10 + p_X - 2p_Y$$
+$$D_X(x, y) = 120 - 15x +10y$$
+$$D_Y(x,y) = 80 + 5x - 20y$$
 
 ### Task
-```{r pricing_strategy}
-# Find revenue function
-# Determine optimal prices
-```
+
+The revenue function, $R_{XY}(x,y)$ is the sum of demand functions $x*D_X(x,y) + y*D_Y(x,y)$.
+
+Expanding and combining like terms, we get $R_{XY}(x,y) = 120x - 15x^2 + 15xy +80y - 20y^2$.
+
+We can take the partial derivatives with regards to $x$ and $y$ and set them to zero to find the critical point.
+
+We find $f_x = 120-15x+15y, f_y = 15x + 80 - 40y$. We can now solve the system of equations via substitution.
+
+Finding that $x = 0.5y + 40$, we can solve for $y$ such that $0 = 15(0.5y + 40) + 80 - 40y)$ to find that $y=4.31$. Similarly, we find $x = 0.5(4.31) + 40$ to find $x=6.155$. Our critical point then is $P_C = (6.155, 4.31)$.
+
+We take the second derivatives to classify our critical point. We find $f_{xx} = -15, f_{yy} = -40, f_{xy} = 15$.
+
+We use these to calculate the discriminant $D = f_{xx} * f_{yy} - f_{xy}^2$, which evaluates to $D = 375$.
+
+Since the $D>0$ and $F_{xx} < 0$, there exists a local maximum for the revenue function. We simply evaluate $R(x,y)$ at our critical point to find the maximum revenue; $R(6.155, 4.31) = 541.3$
+
 
 ## Question 3: Cost Minimization
 
 ### Scenario
 A manufacturing company operates two plants with total cost:
-$$C(x,y) = 2x^2 + 2xy + y^2 - 8x - 10y + 25$$
+$$C(x,y) = \frac{1}{8}x^2 + \frac{1}{10}y^2 + 12x + 18y + 1500$$
 
 ### Task
-```{r cost_minimization}
-# Determine optimal production at each plant
-```
+
+Since we need to produce 200 units, we must first establish $x + y = 200$. We can then take the usual steps to find the minimum of this cost function.
+
+We can then express the cost function purely in terms of $x$ as $y=200-x$ to get $C(x) = \frac{1}{8}x^2 + \frac{1}{10}(200-x)^2 + 12x + 18(200-x) + 1500$, which reduces to $C(x) = 0.225x^2 - 46x + 9100$
+
+Reducing, we find the partial derivative with respect to $x$ to be $f_x = 0.225x - 46$, and setting it equal to zero, $x = 102.22$
+
+We then find $y = 200 - x = 200 - 102.22 = 97.78$, which gives us our critical point (minimum) to be $P_C(102.22, 97.78)$. This means we should produce approximately 102 units in New York, and 98 units in Chicago.
+
+Since $C(x)$ is a quadratic, it has one extreme and no saddle points.
 
 ## Question 4: Marketing Mix
 
 ### Scenario
 A company's marketing effectiveness is modeled by:
-$$E(x,y) = 500 \ln(x+1) + 800 \ln(y+1) - 10x^2 - 20y^2$$
+$$E(x,y) = 500x + 700y - 5x^2 - 10xy - 8y^22$$
 
 ### Task
 ```{r marketing_mix}
