@@ -2,6 +2,7 @@
 title: "DATA 605 HW 3"
 author: "Kevin Havis"
 date: "April 10, 2025"
+output: pdf_document
 ---
 
 ```{r setup, include=FALSE}
